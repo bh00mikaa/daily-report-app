@@ -27,7 +27,7 @@ if not matches.empty:
     matches['Label'] = matches['Project Number'] + " - " + matches['Project Name']
 
     # ✅ Show number of matches
-    st.markdown(f"### 🔢 {len(matches['Label'].unique())} matching project(s) found")
+    st.markdown(f"### {len(matches['Label'].unique())} matching project(s) found")
 
     selected_label = st.selectbox("📁 Matching Projects:", sorted(matches['Label'].unique()))
     selected_project_number = selected_label.split(" - ")[0]
