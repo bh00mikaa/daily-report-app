@@ -4,7 +4,7 @@ import pandas as pd
 # Load your dataset
 @st.cache_data
 def load_data():
-    return pd.read_csv("/Users/apple/DailyReportApp/Daily Report (Authentic Engineers)_DAILY REPORT_Table.csv")  # Change this if your file name is different
+    return pd.read_csv("Daily Report (Authentic Engineers)_DAILY REPORT_Table.csv")  # Change this if your file name is different
 
 df = load_data()
 
