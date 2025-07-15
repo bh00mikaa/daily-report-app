@@ -94,7 +94,7 @@ Detailed Report:
             st.markdown("---")
 
         # Final download button (TXT only)
-        st.markdown("## 📄 Download Summary Report")
+        st.markdown("## Download Summary Report")
         st.download_button(
             label="📄 Download Summary Report (TXT)",
             data=summary_text,
