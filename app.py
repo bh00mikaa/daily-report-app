@@ -13,8 +13,9 @@ df = load_data()
 st.title("📋 Daily Project Report")
 
 # Search Input (Project Number or Name)
-st.markdown("## 🔍 Search & Select Project")
-search_text = st.text_input("Enter part of the project number or project name (e.g., 23-1037 or EOL BARCODE):")
+matches['Label'] = matches['Project Number'] + " - " + matches['Project Name']
+st.markdown(f"### 🔢 {len(matches['Label'].unique())} matching project(s) found")
+selected_label = st.selectbox("📁 Matching Projects:", sorted(matches['Label'].unique()))
 
 # Filter by project number OR project name
 matches = df[
