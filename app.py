@@ -12,14 +12,18 @@ df = load_data()
 # App Title
 st.title("📋 Daily Project Report")
 
-# Search Input
+# Search Input (Project Number or Name)
 st.markdown("## 🔍 Search & Select Project")
-search_text = st.text_input("Enter part of the project number (e.g., 23-10, 5007):")
+search_text = st.text_input("Enter part of the project number or project name (e.g., 23-1037 or EOL BARCODE):")
 
-# Filter based on search
-matches = df[df['Project Number'].str.contains(search_text, case=False, na=False)]
+# Filter by project number OR project name
+matches = df[
+    df['Project Number'].astype(str).str.contains(search_text, case=False, na=False) |
+    df['Project Name'].astype(str).str.contains(search_text, case=False, na=False)
+]
 
 if not matches.empty:
+    # Combine number and name for user-friendly display
     matches['Label'] = matches['Project Number'] + " - " + matches['Project Name']
     selected_label = st.selectbox("📁 Matching Projects:", sorted(matches['Label'].unique()))
     selected_project_number = selected_label.split(" - ")[0]
@@ -104,4 +108,4 @@ if not matches.empty:
             )
 
 else:
-    st.info("Start typing a project number to view and generate its report.")
+    st.info("Start typing a project number or name to view and generate its report.")
