@@ -1,25 +1,29 @@
 import streamlit as st
 import pandas as pd
+from io import StringIO
 
-# Load your dataset
+# Load data
 @st.cache_data
 def load_data():
-    return pd.read_csv("Daily Report (Authentic Engineers)_DAILY REPORT_Table.csv")  # Change this if your file name is different
+    return pd.read_csv("Daily Report (Authentic Engineers)_DAILY REPORT_Table.csv")
 
 df = load_data()
 
-st.set_page_config(page_title="Project Report Viewer", layout="wide")
-st.title("📊 Project Report Viewer")
+# UI: Project Number Dropdown
+st.title("📋 Daily Project Report")
+project_numbers = df['Project Number'].dropna().unique()
+project_numbers.sort()
+selected_project_number = st.selectbox("📁 Select Project Number:", project_numbers)
 
-project_number_input = st.text_input("Enter Project Number:")
+# Report logic
+if st.button("Generate Report"):
 
-if project_number_input:
-    filtered_df = df[df['Project Number'] == project_number_input.strip()]
+    filtered_df = df[df['Project Number'] == selected_project_number]
 
     if filtered_df.empty:
-        st.warning("❌ No data found for this project number.")
+        st.error(f"No data found for Project Number: {selected_project_number}")
     else:
-        # Project Summary Info
+        # Project-level info
         project_name = filtered_df['Project Name'].iloc[0]
         unique_employee = filtered_df['Enter Your Name'].nunique()
         total_project_hours = filtered_df['Hours'].sum()
@@ -29,75 +33,63 @@ if project_number_input:
         total_days = (project_dates.max() - project_dates.min()).days + 1
         total_departments = filtered_df['DEPARTMENT'].nunique()
 
-        # Display on screen
-        st.markdown(f"""
-        ### 📌 Project Details:
-        - **Project Number**: {project_number_input}
-        - **Project Name**: {project_name}
-        - **Number of Employees**: {unique_employee}
-        - **Total Hours Spent**: {round(total_project_hours, 2)}
-        - **Start Date**: {start_date}
-        - **End Date**: {end_date}
-        - **Time Period**: {total_days} days
-        - **Departments Involved**: {total_departments}
-        """)
+        # Header display
+        st.markdown("### 📌 Project Details:")
+        st.text(f"Project Number      : {selected_project_number}")
+        st.text(f"Project Name        : {project_name}")
+        st.text(f"Number of Employees : {unique_employee}")
+        st.text(f"Total Hours Spent   : {round(total_project_hours, 2)}")
+        st.text(f"Start Date          : {start_date}")
+        st.text(f"End Date            : {end_date}")
+        st.text(f"Time Period         : {total_days} days")
+        st.text(f"Departments Involved: {total_departments}")
 
-        st.markdown("---")
-        st.markdown("### 🧾 Detailed Report:")
+        st.markdown("### 📊 Detailed Report:\n")
 
-        # Text report string
-        summary_text = f"""
-📌 Project Details:
-Project Number      : {project_number_input}
-Project Name        : {project_name}
-Number of Employees : {unique_employee}
-Total Hours Spent   : {round(total_project_hours, 2)}
-Start Date          : {start_date}
-End Date            : {end_date}
-Time Period         : {total_days} days
-Departments Involved: {total_departments}
+        final_output = StringIO()
+        final_output.write("📌 Project Details:\n")
+        final_output.write(f"Project Number      : {selected_project_number}\n")
+        final_output.write(f"Project Name        : {project_name}\n")
+        final_output.write(f"Number of Employees : {unique_employee}\n")
+        final_output.write(f"Total Hours Spent   : {round(total_project_hours, 2)}\n")
+        final_output.write(f"Start Date          : {start_date}\n")
+        final_output.write(f"End Date            : {end_date}\n")
+        final_output.write(f"Time Period         : {total_days} days\n")
+        final_output.write(f"Departments Involved: {total_departments}\n\n")
+        final_output.write("Detailed Report:\n\n")
 
-Detailed Report:
-"""
-
-        department_groups = filtered_df.groupby('DEPARTMENT')
-
-        for dept_name, dept_df in department_groups:
+        for dept_name, dept_df in filtered_df.groupby('DEPARTMENT'):
             unique_names = dept_df['Enter Your Name'].unique()
             total_dept_hours = dept_df['Hours'].sum()
 
-            # Show department info on screen
-            st.markdown(f"#### 📁 Department: {dept_name}")
-            st.markdown(f"- Employees Involved: **{len(unique_names)}**")
-            st.markdown(f"- Total Hours Spent: **{round(total_dept_hours, 2)}**")
+            st.markdown(f"#### Department: {dept_name}")
+            st.markdown(f"- Employees Involved: {len(unique_names)}")
+            st.markdown(f"- Total Hours Spent : {round(total_dept_hours, 2)}")
 
-            # Add to txt report
-            summary_text += f"\nDepartment: {dept_name}\n"
-            summary_text += f"   - Employees Involved: {len(unique_names)}\n"
-            summary_text += f"   - Total Hours Spent : {round(total_dept_hours, 2)}\n"
+            final_output.write(f"Department: {dept_name}\n")
+            final_output.write(f"   - Employees Involved: {len(unique_names)}\n")
+            final_output.write(f"   - Total Hours Spent : {round(total_dept_hours, 2)}\n\n")
 
             for name in unique_names:
-                person_data = dept_df[dept_df['Enter Your Name'] == name]
-                daily = person_data.groupby('Date')['Hours'].sum().reset_index()
-
-                # On-screen report
                 st.markdown(f"👤 **{name}**")
-                with st.expander(f"📅 Show dates & hours for {name}"):
-                    for _, row in daily.iterrows():
-                        st.markdown(f"- `{row['Date']}` : **{round(row['Hours'], 2)} hours**")
+                person_data = dept_df[dept_df['Enter Your Name'] == name]
+                daily_breakdown = person_data.groupby('Date')['Hours'].sum().reset_index()
 
-                # Add to txt report
-                summary_text += f"\n👤 {name}\n"
-                for _, row in daily.iterrows():
-                    summary_text += f"   - {row['Date']} : {round(row['Hours'], 2)} hours\n"
+                final_output.write(f"👤 {name}\n")
 
-            st.markdown("---")
+                with st.expander("📅 Show dates & hours worked"):
+                    for _, row in daily_breakdown.iterrows():
+                        date = row['Date']
+                        hours = round(row['Hours'], 2)
+                        st.markdown(f"- {date} : {hours} hours")
+                        final_output.write(f"   - {date} : {hours} hours\n")
+                
+                final_output.write("\n")
 
-        # Final download button (TXT only)
-        st.markdown("## Download Summary Report")
+        # Generate downloadable text file
         st.download_button(
-            label="📄 Download Summary Report (TXT)",
-            data=summary_text,
-            file_name=f"{project_number_input}_summary.txt",
-            mime='text/plain'
+            label="📥 Download Report (.txt)",
+            data=final_output.getvalue(),
+            file_name=f"{selected_project_number}_report.txt",
+            mime="text/plain"
         )
