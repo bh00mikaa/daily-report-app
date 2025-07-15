@@ -11,7 +11,7 @@ df = load_data()
 st.set_page_config(page_title="Project Report Viewer", layout="wide")
 st.title("📊 Project Report Viewer")
 
-project_number_input = st.text_input("Enter Project Number (e.g., 23-1037):")
+project_number_input = st.text_input("Enter Project Number:")
 
 if project_number_input:
     filtered_df = df[df['Project Number'] == project_number_input.strip()]
